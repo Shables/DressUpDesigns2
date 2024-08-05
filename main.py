@@ -88,10 +88,10 @@ class DressUpGame:
         self.base_model = Image.open("assets/Complete Base Model v1.png")
         self.base_model_photo = ImageTk.PhotoImage(self.base_model)
 
-        x = (830 - self.base_model.width) // 2
-        y = (700 - self.base_model.height) // 2
+        self.model_x = (830 - self.base_model.width) // 2
+        self.model_y = (700 - self.base_model.height) // 2
 
-        self.base_model_item = self.dress_area.create_image(x, y, image=self.base_model_photo, anchor=tk.NW)
+        self.base_model_item = self.dress_area.create_image(self.model_x, self.model_y, image=self.base_model_photo, anchor=tk.NW)
 
     def on_category_select(self, event):
         selected_indices = self.category_listbox.curselection()
@@ -119,7 +119,7 @@ class DressUpGame:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     @staticmethod
-    def load_image(file_path, size=(100, 100)):
+    def load_image(file_path, size=(75, 150)):
         try:
             image = Image.open(file_path)
             image = image.resize(size, Image.Resampling.LANCZOS)
@@ -137,10 +137,10 @@ class DressUpGame:
             item_image = Image.open(image_path)
             item_photo = ImageTk.PhotoImage(item_image)
 
-            x = (830 - item_image.width) // 2
-            y = (700 - item_image.height) // 2
+            item_x = self.model_x + (self.base_model.width - item_image.width) // 2
+            item_y = self.model_y + (self.base_model.height - item_image.height) // 2
 
-            item = self.dress_area.create_image(x, y, image=item_photo, anchor=tk.NW)
+            item = self.dress_area.create_image(item_x, item_y, image=item_photo, anchor=tk.NW)
             self.current_outfit[category] = item
 
             # Keep a reference to avoid garbage collection
@@ -160,19 +160,61 @@ class DressUpGame:
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         filename = f"screenshots/dressup_{timestamp}.png"
 
-        x = self.dress_area.winfo_rootx() + self.dress_area.winfo_x()
-        y = self.dress_area.winfo_rooty() + self.dress_area.winfo_y()
-        width = self.dress_area.winfo_width()
-        height = self.dress_area.winfo_height() 
+        # Calculate the coordinates of the model within the canvas
+        x1 = self.dress_area.winfo_rootx() + self.model_x
+        y1 = self.dress_area.winfo_rooty() + self.model_y
+        x2 = x1 + self.base_model.width
+        y2 = y1 + self.base_model.height
 
-        screenshot = ImageGrab.grab(bbox=(x, y, x+width, y+height))
+        # Debug prints to verify calculations
+        print(f"winfo_rootx: {self.dress_area.winfo_rootx()}")
+        print(f"winfo_rooty: {self.dress_area.winfo_rooty()}")
+        print(f"model_x: {self.model_x}")
+        print(f"model_y: {self.model_y}")
+        print(f"base_model.width: {self.base_model.width}")
+        print(f"base_model.height: {self.base_model.height}")
+        print(f"Calculated coordinates: x1={x1}, y1={y1}, x2={x2}, y2={y2}")
+
+        # Capture and save the screenshot
+        screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
         screenshot.save(filename)
         print(f"Screenshot saved as {filename}")
+
 
     def on_frame_configure(self, event):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
+    def capture_model_area(self):
+        # Get the absolute position of the dress area on the screen
+        dress_area_x = self.dress_area.winfo_rootx()
+        dress_area_y = self.dress_area.winfo_rooty()
+        
+        # Assume model_x and model_y are relative to the dress area
+        model_x = self.model_x  # Replace with the actual x-coordinate relative to dress area
+        model_y = self.model_y  # Replace with the actual y-coordinate relative to dress area
+
+        # Calculate the absolute coordinates of the model
+        x1 = dress_area_x + model_x
+        y1 = dress_area_y + model_y
+        x2 = x1 + self.base_model.width
+        y2 = y1 + self.base_model.height
+
+        # Debug prints to verify calculations
+        print(f"winfo_rootx: {dress_area_x}")
+        print(f"winfo_rooty: {dress_area_y}")
+        print(f"Model relative position: ({model_x}, {model_y})")
+        print(f"Absolute coordinates: ({x1}, {y1}), ({x2}, {y2})")
+
+        # Capture the specified area of the screen
+        screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
+
+        # Save the screenshot
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        filename = f"screenshot_{timestamp}.png"
+        screenshot.save(filename)
+        print(f"Screenshot saved as {filename}")
+
 if __name__ == "__main__":
     root = tk.Tk()
-    game = DressUpGame(root)
+    app = DressUpGame(root)
     root.mainloop()
